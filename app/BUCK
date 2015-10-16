@@ -1,5 +1,6 @@
 import re
 
+
 android_prebuilt_aar(
   name = 'support-v4',
   aar = 'libs/support-v4-23.0.1.aar',
@@ -25,13 +26,31 @@ android_resource(
   ]
 )
 
+APP_CLASS_SOURCE = 'src/main/java/nullpointerbay/com/buckgradle/AppShell.java' 
+
+prebuilt_jar(
+  name = 'jars__buck-android-support',
+  binary_jar = 'libs/buck-android-support.jar',
+)
+
+android_library(
+  name = 'application-lib',
+  srcs = [APP_CLASS_SOURCE],
+  deps = [
+    ':build-config',
+    ':jars__buck-android-support',
+  ],
+)
+
 android_library(
   name = 'lib',
-  srcs = glob(['src/main/java/nullpointerbay/com/buckgradle/**/*.java']),
+  srcs = glob(['src/main/java/nullpointerbay/com/buckgradle/**/*.java'],
+  excludes = [APP_CLASS_SOURCE]),
   deps = [
          ':support-v4',
          ':appcompat',
          ':res',
+         ':jars__buck-android-support'
          ],
   visibility = [
         'PUBLIC',
@@ -47,9 +66,11 @@ android_manifest(
   name = 'manifest',
   skeleton = 'src/main/AndroidManifest.xml',
   deps = [
+
     ':lib',
   ],
 )
+
 
 keystore(
   name = 'debug_keystore',
@@ -61,9 +82,15 @@ android_binary(
   name = 'buckgradle',
   manifest = ':manifest',
   keystore = ':debug_keystore',
-  use_split_dex = False,
-  exopackage = False,
+  use_split_dex = True,
+  exopackage = True,
+  primary_dex_patterns = [
+    '^src/main/java/nullpointerbay/com/buckgradle/AppShell.java^',
+    '^src/main/java/nullpointerbay/com/buckgradle/BuildConfig^',
+    '^com/facebook/buck/android/support/exopackage/',
+  ], 
   deps = [
+    ':application-lib',
     ':lib',
     ':support-v4',
     ':appcompat',
